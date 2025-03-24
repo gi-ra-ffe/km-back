@@ -2,6 +2,11 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import auth
+from app.database import Base, engine
+
+# データベースの初期化
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -14,6 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/todo")
-async def get_todos():
-    return [{"id": 1, "title": "Sample Task", "completed": False}]
+# ルーターを追加
+app.include_router(auth.router)
+# app.include_router(todos.router)
+
+# @app.get("/api/todo")
+# async def get_todos():
+#     return [{"id": 1, "title": "Sample Task", "completed": False}]
