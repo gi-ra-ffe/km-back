@@ -3,12 +3,13 @@
 from jose import jwt  # JWTトークンの生成と検証
 from passlib.context import CryptContext  # パスワードのハッシュ化
 from datetime import datetime, timedelta, timezone
+import os
 
 # 日本のタイムゾーン（UTC+9）を作成
 jst = timezone(timedelta(hours=9))
 
 # 秘密鍵とアルゴリズムの設定
-SECRET_KEY = "your_secret_key"  # 実際のプロジェクトでは環境変数で管理
+SECRET_KEY = os.environ.get('SECRET_KEY')
 ALGORITHM = "HS256"  # ハッシュアルゴリズム
 
 # パスワードのハッシュ化コンテキスト
