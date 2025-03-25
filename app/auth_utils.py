@@ -3,10 +3,14 @@
 from jose import jwt  # JWTトークンの生成と検証
 from passlib.context import CryptContext  # パスワードのハッシュ化
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 import os
 
 # 日本のタイムゾーン（UTC+9）を作成
 jst = timezone(timedelta(hours=9))
+
+# .env ファイルを明示的に読み込む
+load_dotenv()
 
 # 秘密鍵とアルゴリズムの設定
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -37,6 +41,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()  # データをコピー
     expire = datetime.now(jst) + (expires_delta or timedelta(minutes=15))  # 有効期限を設定
     to_encode.update({"exp": expire})  # トークンに有効期限を追加
+    print("SECRET_KEY:", SECRET_KEY)
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 # アクセストークンのデコード

@@ -1,6 +1,7 @@
 # km-back/app/schemas.py
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
+from datetime import datetime
 
 # パスワード用の正規表現パターン
 PASSWORD_PATTERN = r"^[a-zA-Z0-9!-/:-@\[-`{-~]*$"
@@ -28,4 +29,25 @@ class UserLogin(BaseModel):
     password: str
 
     class Config:
+        from_attributes = True
+
+# 基本のアイテムスキーマ
+class ItemBase(BaseModel):
+    name : str
+    category : str
+    color : str
+    memo : str = None  # メモ（任意）
+
+# アイテム登録用のスキーマ
+class ItemCreate(ItemBase):
+    pass  # ItemBaseと同じ内容なので、そのまま継承
+
+# アイテムレスポンス用のスキーマ
+class ItemResponse(ItemBase):
+    id: int  # タスクID
+    created_at: datetime  # 作成日時
+    updated_at: datetime  # 更新日時
+
+    class Config:
+        # ORM（データベースモデル）からデータを読み取る設定
         from_attributes = True
