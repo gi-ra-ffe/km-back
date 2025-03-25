@@ -31,6 +31,15 @@ def create_coordinate(coordinate: CoordinateCreate, db: Session = Depends(get_db
     db.refresh(new_coordinate)  # 新しいデータをリロード
     return CoordinateResponse(**new_coordinate.__dict__)
 
+# コーディネートを取得するエンドポイント
+@router.get("/{coordinate_id}", response_model=CoordinateResponse,summary="コーディネートを取得",)
+def get_coordinates(coordinate_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    指定したIDのコーディネートを取得
+    """
+    coordinate = db.query(Coordinate).filter(Coordinate.id == coordinate_id, Coordinate.user_id == current_user.id).first()
+    return CoordinateResponse(**coordinate.__dict__)
+
 # コーディネートを更新するエンドポイント
 @router.put("/{coordinate_id}", response_model=CoordinateResponse,summary="コーディネートを更新",)
 def update_coordinate(coordinate_id: int, coordinate: CoordinateCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
