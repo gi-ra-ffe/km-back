@@ -16,7 +16,9 @@ class User(Base):
     hashed_password = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(JST))  # 作成日時を現在時刻で自動設定
     updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
+    # リレーション export
     items = relationship("Item", back_populates="user")
+    coordinates = relationship("Coordinate", back_populates="user")
 
 class Item(Base):
     __tablename__ = "items"
@@ -30,5 +32,37 @@ class Item(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # リレーション
+    # リレーション import
     user = relationship("User", back_populates="items")
+    # リレーション export
+    coordinate_items = relationship("CoordinateItems", back_populates="item")
+
+class Coordinate(Base):
+    __tablename__ = "coordinates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    memo = Column(String)
+    created_at = Column(DateTime, default=lambda: datetime.now(JST))  # 作成日時を現在時刻で自動設定
+    updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # リレーション import
+    user = relationship("User", back_populates="coordinates")
+    # リレーション export
+    coordinate_items = relationship("CoordinateItems", back_populates="coordinate")
+
+class CoordinateItems(Base):
+    __tablename__ = "coordinate_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    day = Column(DateTime)
+    created_at = Column(DateTime, default=lambda: datetime.now(JST))  # 作成日時を現在時刻で自動設定
+    updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
+    coordinate_id = Column(Integer, ForeignKey("coordinates.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("items.id"), nullable=False)
+
+    # リレーション import
+    coordinate = relationship("Coordinate", back_populates="coordinate_items")
+    item = relationship("Item", back_populates="coordinate_items")
+    # リレーション export

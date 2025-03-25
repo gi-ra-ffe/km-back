@@ -51,3 +51,40 @@ class ItemResponse(ItemBase):
     class Config:
         # ORM（データベースモデル）からデータを読み取る設定
         from_attributes = True
+
+# 基本のコーディネートスキーマ
+class CoordinateBase(BaseModel):
+    name : str
+    memo : str = None  # メモ（任意）
+
+# コーディネート登録用のスキーマ
+class CoordinateCreate(CoordinateBase):
+    pass  # CoordinateBaseと同じ内容なので、そのまま継承
+
+# コーディネートレスポンス用のスキーマ
+class CoordinateResponse(CoordinateBase):
+    id: int  # タスクID
+    created_at: datetime  # 作成日時
+    updated_at: datetime  # 更新日時
+    class Config:
+        # ORM（データベースモデル）からデータを読み取る設定
+        from_attributes = True
+
+# 基本のコーディネートアイテムスキーマ
+class CoordinateItemsBase(BaseModel):
+    day: datetime
+
+# コーディネートアイテム登録用のスキーマ
+class CoordinateItemsCreate(CoordinateItemsBase):
+    pass  # CoordinateItemsBaseと同じ内容なので、そのまま継承
+
+# コーディネートアイテムレスポンス用のスキーマ
+class CoordinateItemsResponse(CoordinateItemsBase):
+    id: int  # タスクID
+    created_at: datetime  # 作成日時
+    updated_at: datetime  # 更新日時
+    item_id: int
+
+    class Config:
+        # ORM（データベースモデル）からデータを読み取る設定
+        from_attributes = True

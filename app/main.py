@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, items
+from app.routes import auth, items, coordinates, coordinate_items
 from app.database import Base, engine
 
 # データベースの初期化
@@ -22,6 +22,8 @@ app.add_middleware(
 # ルーターを追加
 app.include_router(auth.router)
 app.include_router(items.router)
+app.include_router(coordinates.router)
+app.include_router(coordinate_items.router)
 
 # @app.get("/api/todo")
 # async def get_todos():
