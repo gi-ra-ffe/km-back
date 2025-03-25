@@ -46,7 +46,7 @@ def create_coordinateItems(
 
 # コーディネートに使用したアイテムを更新するエンドポイント
 @router.put("/{coordinate_id}", response_model=List[CoordinateItemsResponse],summary="コーディネートに使用したアイテムを更新",)
-def update_coordinate(
+def update_coordinateItems(
     coordinateItems: CoordinateItemsCreate , 
     coordinate_id: int, 
     used_items: list[int],
@@ -75,7 +75,7 @@ def update_coordinate(
 
 # アイテムをコーディネートから削除するエンドポイント
 @router.delete("/{coordinate_id}",summary="アイテムをコーディネートから削除",)
-def delete_coordinate(coordinate_id: int, db: Session = Depends(get_db)):
+def delete_coordinateItems(coordinate_id: int, db: Session = Depends(get_db)):
     """
     指定したIDのアイテムをコーディネートから削除
     """
