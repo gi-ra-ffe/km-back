@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.models import Item, User
-from app.schemas import ItemCreate, ItemResponse
+from app.models import Item, User, Coordinate , CoordinateItems
+from app.schemas import ItemCreate, ItemResponse, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
 from typing import List
@@ -72,3 +72,21 @@ def delete_item(item_id: int, db: Session = Depends(get_db), current_user: User 
     db.delete(item)  # データを削除
     db.commit()  # 保存
     return {"message": "アイテムが削除されました"}
+
+# 指定したアイテムを利用したコーディネート取得するエンドポイント
+@router.get("/{item_id}/coordinates", response_model=List[CoordinateResponse],summary="アイテムを利用したコーディネートを取得",)
+def update_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    指定したIDのアイテムを利用したコーディネートを取得
+    """
+    coordinates = (
+        db.query(Coordinate)
+        .join(CoordinateItems)
+        .filter(CoordinateItems.item_id == item_id)
+        .filter(Coordinate.user_id == current_user.id)  # 自分のだけ
+        .all()
+    )
+    # 指定IDのアイテムを取得
+    # if not existing_item:
+    #     raise HTTPException(status_code=404, detail="Item not found")
+    return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
