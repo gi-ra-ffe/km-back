@@ -84,6 +84,7 @@ class CoordinateItemsResponse(CoordinateItemsBase):
     created_at: datetime  # 作成日時
     updated_at: datetime  # 更新日時
     item_id: int
+    coordinate_id: int
 
     class Config:
         # ORM（データベースモデル）からデータを読み取る設定

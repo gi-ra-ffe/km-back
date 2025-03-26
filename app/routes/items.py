@@ -31,6 +31,18 @@ def create_item(item: ItemCreate, db: Session = Depends(get_db), current_user: U
     db.refresh(new_item)  # 新しいデータをリロード
     return ItemResponse(**new_item.__dict__)
 
+# アイテムを取得するエンドポイント
+@router.get("/{item_id}", response_model=ItemResponse,summary="アイテムを取得",)
+def update_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    指定したIDのアイテムを取得
+    """
+    # 指定IDのアイテムを取得
+    existing_item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
+    if not existing_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return ItemResponse(**existing_item.__dict__)
+
 # アイテムを更新するエンドポイント
 @router.put("/{item_id}", response_model=ItemResponse,summary="アイテムを更新",)
 def update_item(item_id: int, item: ItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
