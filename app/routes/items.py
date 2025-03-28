@@ -90,3 +90,26 @@ def update_item(item_id: int, db: Session = Depends(get_db), current_user: User 
     # if not existing_item:
     #     raise HTTPException(status_code=404, detail="Item not found")
     return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
+
+# 指定したアイテムを利用したコーディネートから削除するエンドポイント
+@router.delete("/{item_id}/coordinates",summary="指定したアイテムを利用したコーディネートから削除",)
+def delete_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    指定したIDのアイテムを利用したコーディネートから削除
+    """
+    items = (
+        db.query(CoordinateItems)
+        .join(Coordinate)
+        .filter(CoordinateItems.item_id == item_id)
+        .filter(Coordinate.user_id == current_user.id)
+        .all()
+    )
+    if not items:
+        return {"message": "削除対象のアイテムはありません"}
+
+    for item in items:
+        db.delete(item)
+    
+    db.commit()
+
+    return {"message": f"{len(items)} 件のコーディネートからアイテムが削除されました"}
