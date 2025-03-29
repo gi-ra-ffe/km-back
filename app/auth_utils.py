@@ -36,7 +36,7 @@ def get_password_hash(password):
 # アクセストークンの生成
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """
-    JWTトークンを生成
+    アクセストークンのJWTトークンを生成
     """
     to_encode = data.copy()  # データをコピー
     expire = datetime.now(jst) + (expires_delta or timedelta(minutes=15))  # 有効期限を設定
@@ -44,8 +44,25 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 # アクセストークンのデコード
-def decode_access_token(token: str):
+def decode_access_token(access_token: str):
     """
-    JWTトークンをデコードし、中身を返す
+    アクセストークンのJWTトークンをデコードし、中身を返す
     """
-    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+
+# リフレッシュトークンの生成
+def create_refresh_token(data: dict, expires_delta: timedelta = None):
+    """
+    リフレッシュトークンのJWTトークンを生成
+    """
+    to_encode = data.copy()  # データをコピー
+    expire = datetime.now(jst) + (expires_delta or timedelta(days=15))  # 有効期限を設定
+    to_encode.update({"exp": expire})  # トークンに有効期限を追加
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# リフレッシュトークンのデコード
+def decode_refresh_token(refresh_token: str):
+    """
+    リフレッシュトークンのJWTトークンをデコードし、中身を返す
+    """
+    return jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])

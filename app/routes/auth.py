@@ -4,14 +4,19 @@ from fastapi.security import OAuth2PasswordBearer
 from app.schemas import UserCreate, UserLogin
 from app.models import User
 from app.database import get_db
-from app.auth_utils import verify_password, get_password_hash, create_access_token
+from app.auth_utils import verify_password, get_password_hash, create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
 from datetime import timedelta
+from jose import jwt  # JWTトークンの生成と検証
 
 # 認証ルーターを作成
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # トークンを取得するためのエンドポイントのURL
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+# 各トークンの期限
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # ユーザー登録エンドポイント
 @router.post("/signup",summary="ユーザー登録",)
@@ -48,8 +53,37 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="無効です")
 
     # JWTトークンを生成して返す
-    access_token = create_access_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=30))
-    return {"token": access_token, "username": db_user.username}
+    access_token = create_access_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    refresh_token = create_refresh_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=REFRESH_TOKEN_EXPIRE_DAYS))
+    return {
+        "access_token": access_token, 
+        "username": db_user.username, 
+        "refresh_token":refresh_token,
+        "token_type": "bearer"
+    }
+
+# リフレッシュトークンを受け取って新しいアクセストークンを返す
+@router.post('/refresh', summary="リフレッシュトークンで新しいアクセストークンを取得")
+def refresh(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="ユーザー情報が含まれていません")
+    except Exception:
+        raise HTTPException(status_code=401, detail="リフレッシュトークンの検証に失敗しました")
+    
+    # ユーザーをデータベースから取得
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="ユーザーが存在しません")
+
+    # JWTトークンを生成して返す
+    new_access_token = create_access_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
 
 # 現在のユーザーを取得するヘルパー関数
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
