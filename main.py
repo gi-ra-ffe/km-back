@@ -13,7 +13,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/api/todo")
-async def get_todos():
-    return [{"id": 1, "title": "Sample Task", "completed": False}]
