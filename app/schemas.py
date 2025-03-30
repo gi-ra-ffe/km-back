@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 from datetime import datetime
+from typing import List
 
 # パスワード用の正規表現パターン
 PASSWORD_PATTERN = r"^[a-zA-Z0-9!-/:-@\[-`{-~]*$"
@@ -91,3 +92,6 @@ class CoordinateItemsResponse(CoordinateItemsBase):
     class Config:
         # ORM（データベースモデル）からデータを読み取る設定
         from_attributes = True
+
+class UsedItemsRequest(BaseModel):
+    used_items: List[int]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models import CoordinateItems, Coordinate, User
-from app.schemas import CoordinateItemsCreate, CoordinateItemsResponse
+from app.schemas import UsedItemsRequest, CoordinateItemsResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
 from typing import List
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/coordinate_items", tags=["coordinateItems"])
 @router.post("", response_model=List[CoordinateItemsResponse],summary="コーディネートに使用したアイテムを登録",)
 def create_coordinateItems(
     coordinate_id: int,
-    used_items: list[int],
+    request: UsedItemsRequest,
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
     ):
@@ -30,8 +30,8 @@ def create_coordinateItems(
     if coordinate.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="このコーディネートへのアクセス権がありません")
     
+    used_items = request.used_items
     created = []
-
     for item_id in used_items:
         new_item = CoordinateItems(
             item_id=item_id,
@@ -67,7 +67,7 @@ def get_coordinateItems(coordinate_id: int, db: Session = Depends(get_db), curre
 @router.put("/{coordinate_id}", response_model=List[CoordinateItemsResponse],summary="コーディネートに使用したアイテムを更新",)
 def update_coordinateItems(
     coordinate_id: int, 
-    used_items: list[int],
+    request: UsedItemsRequest,
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
     ):
@@ -87,7 +87,7 @@ def update_coordinateItems(
     db.query(CoordinateItems).filter(CoordinateItems.coordinate_id == coordinate_id).delete()
 
     updated = []
-
+    used_items = request.used_items
     for item_id in used_items:
         new_item = CoordinateItems(
             item_id=item_id,
