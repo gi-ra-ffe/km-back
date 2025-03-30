@@ -42,6 +42,7 @@ class Coordinate(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    day = Column(DateTime)
     memo = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(JST))  # 作成日時を現在時刻で自動設定
     updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
@@ -56,7 +57,6 @@ class CoordinateItems(Base):
     __tablename__ = "coordinate_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    day = Column(DateTime)
     created_at = Column(DateTime, default=lambda: datetime.now(JST))  # 作成日時を現在時刻で自動設定
     updated_at = Column(DateTime, default=lambda: datetime.now(JST), onupdate=lambda: datetime.now(JST))
     coordinate_id = Column(Integer, ForeignKey("coordinates.id"), nullable=False)

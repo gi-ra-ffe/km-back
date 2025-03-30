@@ -55,6 +55,7 @@ class ItemResponse(ItemBase):
 # 基本のコーディネートスキーマ
 class CoordinateBase(BaseModel):
     name : str
+    day: datetime
     memo : str = None  # メモ（任意）
 
 # コーディネート登録用のスキーマ
@@ -64,6 +65,7 @@ class CoordinateCreate(CoordinateBase):
 # コーディネートレスポンス用のスキーマ
 class CoordinateResponse(CoordinateBase):
     id: int  # タスクID
+    day: datetime
     created_at: datetime  # 作成日時
     updated_at: datetime  # 更新日時
     class Config:
@@ -72,7 +74,7 @@ class CoordinateResponse(CoordinateBase):
 
 # 基本のコーディネートアイテムスキーマ
 class CoordinateItemsBase(BaseModel):
-    day: datetime
+    pass 
 
 # コーディネートアイテム登録用のスキーマ
 class CoordinateItemsCreate(CoordinateItemsBase):

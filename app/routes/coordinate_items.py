@@ -12,7 +12,6 @@ router = APIRouter(prefix="/coordinate_items", tags=["coordinateItems"])
 # コーディネートに使用したアイテムを登録するエンドポイント
 @router.post("", response_model=List[CoordinateItemsResponse],summary="コーディネートに使用したアイテムを登録",)
 def create_coordinateItems(
-    coordinateItems: CoordinateItemsCreate , 
     coordinate_id: int,
     used_items: list[int],
     db: Session = Depends(get_db), 
@@ -37,7 +36,6 @@ def create_coordinateItems(
         new_item = CoordinateItems(
             item_id=item_id,
             coordinate_id=coordinate_id,
-            day=coordinateItems.day
         )
         db.add(new_item)
         db.commit()
@@ -68,7 +66,6 @@ def get_coordinateItems(coordinate_id: int, db: Session = Depends(get_db), curre
 # コーディネートに使用したアイテムを更新するエンドポイント
 @router.put("/{coordinate_id}", response_model=List[CoordinateItemsResponse],summary="コーディネートに使用したアイテムを更新",)
 def update_coordinateItems(
-    coordinateItems: CoordinateItemsCreate , 
     coordinate_id: int, 
     used_items: list[int],
     db: Session = Depends(get_db), 
@@ -95,7 +92,6 @@ def update_coordinateItems(
         new_item = CoordinateItems(
             item_id=item_id,
             coordinate_id=coordinate_id,
-            day=coordinateItems.day
         )
         db.add(new_item)
         db.commit()
