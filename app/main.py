@@ -2,7 +2,8 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, items, coordinates, coordinate_items
+from fastapi.staticfiles import StaticFiles
+from app.routes import auth, items, coordinates, coordinate_items, images
 from app.database import Base, engine
 
 # データベースの初期化
@@ -24,7 +25,7 @@ app.include_router(auth.router)
 app.include_router(items.router)
 app.include_router(coordinates.router)
 app.include_router(coordinate_items.router)
+app.include_router(images.router)
 
-# @app.get("/api/todo")
-# async def get_todos():
-#     return [{"id": 1, "title": "Sample Task", "completed": False}]
+# # 静的ファイル（画像など）の公開設定
+app.mount("/images", StaticFiles(directory="upload"), name="images")

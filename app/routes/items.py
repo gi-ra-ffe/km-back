@@ -4,6 +4,7 @@ from app.models import Item, User, Coordinate , CoordinateItems
 from app.schemas import ItemCreate, ItemResponse, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
+from app.routes.images import delete_file_if_exists
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -53,6 +54,11 @@ def update_item(item_id: int, item: ItemCreate, db: Session = Depends(get_db), c
     existing_item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if not existing_item:
         raise HTTPException(status_code=404, detail="Item not found")
+    
+    # 画像URLが変わっていたら古い画像削除
+    if item.photo_url and item.photo_url != existing_item.photo_url:
+        delete_file_if_exists(existing_item.photo_url)
+
     # 更新するフィールドを設定
     for key, value in item.dict(exclude_unset=True).items():
         setattr(existing_item, key, value)
@@ -69,6 +75,7 @@ def delete_item(item_id: int, db: Session = Depends(get_db), current_user: User 
     item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+    delete_file_if_exists(item.photo_url)
     db.delete(item)  # データを削除
     db.commit()  # 保存
     return {"message": "アイテムが削除されました"}

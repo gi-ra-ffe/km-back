@@ -4,6 +4,7 @@ from app.models import Coordinate, User
 from app.schemas import CoordinateCreate, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
+from app.routes.images import delete_file_if_exists
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -50,6 +51,11 @@ def update_coordinate(coordinate_id: int, coordinate: CoordinateCreate, db: Sess
     existing_coordinate = db.query(Coordinate).filter(Coordinate.id == coordinate_id, Coordinate.user_id == current_user.id).first()
     if not existing_coordinate:
         raise HTTPException(status_code=404, detail="Coordinate not found")
+    
+    # 画像URLが変わっていたら古い画像削除
+    if coordinate.photo_url and coordinate.photo_url != existing_coordinate.photo_url:
+        delete_file_if_exists(existing_coordinate.photo_url)
+
     # 更新するフィールドを設定
     for key, value in coordinate.dict(exclude_unset=True).items():
         setattr(existing_coordinate, key, value)
@@ -66,6 +72,7 @@ def delete_coordinate(coordinate_id: int, db: Session = Depends(get_db), current
     coordinate = db.query(Coordinate).filter(Coordinate.id == coordinate_id, Coordinate.user_id == current_user.id).first()
     if not coordinate:
         raise HTTPException(status_code=404, detail="Coordinate not found")
+    delete_file_if_exists(coordinate.photo_url)
     db.delete(coordinate)  # データを削除
     db.commit()  # 保存
     return {"message": "コーディネートが削除されました"}
