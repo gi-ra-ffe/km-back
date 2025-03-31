@@ -37,6 +37,7 @@ class ItemBase(BaseModel):
     name : str
     category : str
     color : str
+    photo_url : str
     memo : str = None  # メモ（任意）
 
 # アイテム登録用のスキーマ
@@ -57,6 +58,7 @@ class ItemResponse(ItemBase):
 class CoordinateBase(BaseModel):
     name : str
     day: datetime
+    photo_url : str
     memo : str = None  # メモ（任意）
 
 # コーディネート登録用のスキーマ
