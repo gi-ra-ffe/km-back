@@ -2,7 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 # パスワード用の正規表現パターン
 PASSWORD_PATTERN = r"^[a-zA-Z0-9!-/:-@\[-`{-~]*$"
@@ -37,7 +37,7 @@ class ItemBase(BaseModel):
     name : str
     category : str
     color : str
-    photo_url : str
+    photo_url : Optional[str] = None # (任意)
     memo : str = None  # メモ（任意）
 
 # アイテム登録用のスキーマ
@@ -58,7 +58,7 @@ class ItemResponse(ItemBase):
 class CoordinateBase(BaseModel):
     name : str
     day: datetime
-    photo_url : str
+    photo_url : Optional[str] = None # (任意)
     memo : str = None  # メモ（任意）
 
 # コーディネート登録用のスキーマ
