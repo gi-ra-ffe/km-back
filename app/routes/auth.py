@@ -6,7 +6,8 @@ from app.models import User
 from app.database import get_db
 from app.auth_utils import verify_password, get_password_hash, create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
 from datetime import timedelta
-from jose import jwt  # JWTトークンの生成と検証
+from jose import jwt, JWTError  # JWTトークンの生成と検証
+from jose.exceptions import ExpiredSignatureError
 
 # 認証ルーターを作成
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -54,7 +55,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     # JWTトークンを生成して返す
     access_token = create_access_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    refresh_token = create_refresh_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(minutes=REFRESH_TOKEN_EXPIRE_DAYS))
+    refresh_token = create_refresh_token(data={"sub": str(db_user.id)}, expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
     return {
         "access_token": access_token, 
         "username": db_user.username, 
@@ -70,8 +71,12 @@ def refresh(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="ユーザー情報が含まれていません")
-    except Exception:
-        raise HTTPException(status_code=401, detail="リフレッシュトークンの検証に失敗しました")
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="リフレッシュトークンの有効期限が切れています")
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="リフレッシュトークンが無効です")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="トークン再発行中に内部エラーが発生しました")
     
     # ユーザーをデータベースから取得
     db_user = db.query(User).filter(User.id == user_id).first()
@@ -91,7 +96,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     トークンからユーザー情報を取得する
     """
     from app.auth_utils import decode_access_token
-    payload = decode_access_token(token)  # トークンをデコード
+    try:
+        payload = decode_access_token(token)
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="リフレッシュトークンの有効期限が切れています")
     user = db.query(User).filter(User.id == payload.get("sub")).first()
     if not user:
         raise HTTPException(status_code=401, detail="無効なトークンです")
