@@ -24,6 +24,22 @@ class UserCreate(BaseModel):
             raise ValueError("パスワードは半角英数字と記号のみ使用できます")
         return v
 
+# ユーザー更新用のスキーマ
+class UserUpdate(BaseModel):
+    username: Optional[str]
+    email: Optional[EmailStr]
+    password: Optional[str]
+    class Config:
+        from_attributes = True
+
+    # パスワードは英数字のみとする
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        if not re.match(PASSWORD_PATTERN, v):
+            raise ValueError("パスワードは半角英数字と記号のみ使用できます")
+        return v
+
 # ユーザーログイン用のスキーマ
 class UserLogin(BaseModel):
     email: EmailStr  # メールアドレス（形式チェック付き）

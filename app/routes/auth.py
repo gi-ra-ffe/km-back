@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
-from app.schemas import UserCreate, UserLogin
+from app.schemas import UserCreate, UserLogin, UserUpdate
 from app.models import User
 from app.database import get_db
 from app.auth_utils import verify_password, get_password_hash, create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
@@ -108,3 +108,30 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "id": current_user.id
     }
+
+# ユーザー情報を変更する
+@router.put("/me",summary="ユーザー情報を変更する",)
+def update_current_user(update_user: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    ユーザー情報を変更する
+    """
+    # ユーザーをデータベースから取得
+    db_user = db.query(User).filter(User.email == current_user.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="ユーザー情報が見つかりません")
+    
+    update_data = update_user.dict(exclude_unset=True)
+
+    # パスワードが送られてきたらハッシュ化して保存
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    # 更新するフィールドを設定
+    for key, value in update_user.dict(exclude_unset=True).items():
+        setattr(db_user, key, value)
+    db.commit()  # 保存
+    db.refresh(db_user)  # データをリロード
+    return {"message": "ユーザー情報が更新されました"}
