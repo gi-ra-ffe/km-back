@@ -3,6 +3,8 @@
 
 /upload
 
+/bkup
+
 km_app.db
 
 .env
