@@ -4,7 +4,7 @@ from app.models import Item, User, Coordinate , CoordinateItems
 from app.schemas import ItemCreate, ItemResponse, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
-from app.routes.images import delete_file_if_exists
+from app.routes.images import delete_file_if_exists, s3_client, bucket_name
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -17,6 +17,16 @@ def get_items(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     現在のユーザーに紐づくアイテムを全て取得
     """
     items = db.query(Item).filter(Item.user_id == current_user.id).all()
+
+    for item in items:
+        if item.photo_url:
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': bucket_name, 'Key': item.photo_url},
+                ExpiresIn=3600
+            )
+            item.photo_url = presigned_url
+
     return [ItemResponse(**item.__dict__) for item in items]  # dict から変換
 
 # アイテムを作成するエンドポイント
@@ -34,7 +44,7 @@ def create_item(item: ItemCreate, db: Session = Depends(get_db), current_user: U
 
 # アイテムを取得するエンドポイント
 @router.get("/{item_id}", response_model=ItemResponse,summary="アイテムを取得",)
-def update_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     指定したIDのアイテムを取得
     """
@@ -42,6 +52,15 @@ def update_item(item_id: int, db: Session = Depends(get_db), current_user: User 
     existing_item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if not existing_item:
         raise HTTPException(status_code=404, detail="Item not found")
+
+    if existing_item.photo_url:
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': existing_item.photo_url},
+            ExpiresIn=3600
+        )
+        existing_item.photo_url = presigned_url
+
     return ItemResponse(**existing_item.__dict__)
 
 # アイテムを更新するエンドポイント
@@ -75,14 +94,15 @@ def delete_item(item_id: int, db: Session = Depends(get_db), current_user: User 
     item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    delete_file_if_exists(item.photo_url)
+    if item.photo_url:
+        delete_file_if_exists(item.photo_url)
     db.delete(item)  # データを削除
     db.commit()  # 保存
     return {"message": "アイテムが削除されました"}
 
 # 指定したアイテムを利用したコーディネート取得するエンドポイント
 @router.get("/{item_id}/coordinates", response_model=List[CoordinateResponse],summary="アイテムを利用したコーディネートを取得",)
-def update_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_coordinates_by_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     指定したIDのアイテムを利用したコーディネートを取得
     """
@@ -93,14 +113,21 @@ def update_item(item_id: int, db: Session = Depends(get_db), current_user: User 
         .filter(Coordinate.user_id == current_user.id)  # 自分のだけ
         .all()
     )
-    # 指定IDのアイテムを取得
-    # if not existing_item:
-    #     raise HTTPException(status_code=404, detail="Item not found")
+
+    for coordinate in coordinates:
+        if coordinate.photo_url:
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
+                ExpiresIn=3600
+            )
+            coordinate.photo_url = presigned_url
+    
     return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
 
 # 指定したアイテムを利用したコーディネートから削除するエンドポイント
 @router.delete("/{item_id}/coordinates",summary="指定したアイテムを利用したコーディネートから削除",)
-def delete_item(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_item_from_coordinates(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     指定したIDのアイテムを利用したコーディネートから削除
     """

@@ -49,8 +49,8 @@ def generate_presigned_url(filename: str):
     )
     return {"photo_url": url}
     
-# 画像URLを作成するエンドポイント
-@router.post("",summary="画像URLを作成",)
+# 画像をアップロードするエンドポイント
+@router.post("",summary="画像をアップロード",)
 def upload_image(uploaded_file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     try:
         validate_image_file(uploaded_file)
@@ -65,8 +65,7 @@ def upload_image(uploaded_file: UploadFile = File(...), current_user: User = Dep
         s3_client.upload_fileobj(buffer, bucket_name, filename)
         print(f"File {uploaded_file} uploaded to {bucket_name}/{filename}")
         
-        s3_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{filename}"
         # 保存後のURLを返す
-        return {"photo_url": s3_url}
+        return {"photo_url": filename}
     except Exception as e:
         return {"error": str(e)}

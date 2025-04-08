@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.models import CoordinateItems, Coordinate, User
+from app.models import CoordinateItems, Coordinate, User, Item
 from app.schemas import UsedItemsRequest, CoordinateItemsResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
+from app.routes.images import delete_file_if_exists, s3_client, bucket_name
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）

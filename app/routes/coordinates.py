@@ -4,7 +4,7 @@ from app.models import Coordinate, User
 from app.schemas import CoordinateCreate, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
-from app.routes.images import delete_file_if_exists
+from app.routes.images import delete_file_if_exists, s3_client, bucket_name
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -17,6 +17,16 @@ def get_coordinates(db: Session = Depends(get_db), current_user: User = Depends(
     現在のユーザーに紐づくコーディネートを全て取得
     """
     coordinates = db.query(Coordinate).filter(Coordinate.user_id == current_user.id).all()
+
+    for coordinate in coordinates:
+        if coordinate.photo_url:
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
+                ExpiresIn=3600
+            )
+            coordinate.photo_url = presigned_url
+
     return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
 
 # コーディネートを作成するエンドポイント
@@ -34,11 +44,20 @@ def create_coordinate(coordinate: CoordinateCreate, db: Session = Depends(get_db
 
 # コーディネートを取得するエンドポイント
 @router.get("/{coordinate_id}", response_model=CoordinateResponse,summary="コーディネートを取得",)
-def get_coordinates(coordinate_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_coordinate(coordinate_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     指定したIDのコーディネートを取得
     """
     coordinate = db.query(Coordinate).filter(Coordinate.id == coordinate_id, Coordinate.user_id == current_user.id).first()
+
+    if coordinate.photo_url:
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
+            ExpiresIn=3600
+        )
+        coordinate.photo_url = presigned_url
+
     return CoordinateResponse(**coordinate.__dict__)
 
 # コーディネートを更新するエンドポイント
