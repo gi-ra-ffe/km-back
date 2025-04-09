@@ -4,7 +4,7 @@ from app.models import Item, User, Coordinate , CoordinateItems
 from app.schemas import ItemCreate, ItemResponse, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
-from app.routes.images import delete_file_if_exists, s3_client, bucket_name
+from app.routes.images import delete_file_if_exists, generate_presigned_url
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -20,12 +20,7 @@ def get_items(db: Session = Depends(get_db), current_user: User = Depends(get_cu
 
     for item in items:
         if item.photo_url:
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': bucket_name, 'Key': item.photo_url},
-                ExpiresIn=3600
-            )
-            item.photo_url = presigned_url
+            item.photo_url = generate_presigned_url(item.photo_url)
 
     return [ItemResponse(**item.__dict__) for item in items]  # dict から変換
 
@@ -54,12 +49,7 @@ def get_item(item_id: int, db: Session = Depends(get_db), current_user: User = D
         raise HTTPException(status_code=404, detail="Item not found")
 
     if existing_item.photo_url:
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': bucket_name, 'Key': existing_item.photo_url},
-            ExpiresIn=3600
-        )
-        existing_item.photo_url = presigned_url
+        existing_item.photo_url = generate_presigned_url(existing_item.photo_url)
 
     return ItemResponse(**existing_item.__dict__)
 
@@ -116,12 +106,7 @@ def get_coordinates_by_item(item_id: int, db: Session = Depends(get_db), current
 
     for coordinate in coordinates:
         if coordinate.photo_url:
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
-                ExpiresIn=3600
-            )
-            coordinate.photo_url = presigned_url
+            coordinate.photo_url = generate_presigned_url(coordinate.photo_url)
     
     return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
 

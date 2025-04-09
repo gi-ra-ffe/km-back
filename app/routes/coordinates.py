@@ -4,7 +4,7 @@ from app.models import Coordinate, User
 from app.schemas import CoordinateCreate, CoordinateResponse
 from app.database import get_db
 from app.routes.auth import get_current_user
-from app.routes.images import delete_file_if_exists, s3_client, bucket_name
+from app.routes.images import delete_file_if_exists, generate_presigned_url
 from typing import List
 
 # ルーターの作成（エンドポイントのプレフィックスとタグを設定）
@@ -20,12 +20,7 @@ def get_coordinates(db: Session = Depends(get_db), current_user: User = Depends(
 
     for coordinate in coordinates:
         if coordinate.photo_url:
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
-                ExpiresIn=3600
-            )
-            coordinate.photo_url = presigned_url
+            coordinate.photo_url = generate_presigned_url(coordinate.photo_url)
 
     return [CoordinateResponse(**coordinate.__dict__) for coordinate in coordinates]  # dict から変換
 
@@ -51,12 +46,7 @@ def get_coordinate(coordinate_id: int, db: Session = Depends(get_db), current_us
     coordinate = db.query(Coordinate).filter(Coordinate.id == coordinate_id, Coordinate.user_id == current_user.id).first()
 
     if coordinate.photo_url:
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': bucket_name, 'Key': coordinate.photo_url},
-            ExpiresIn=3600
-        )
-        coordinate.photo_url = presigned_url
+        coordinate.photo_url = generate_presigned_url(coordinate.photo_url)
 
     return CoordinateResponse(**coordinate.__dict__)
 

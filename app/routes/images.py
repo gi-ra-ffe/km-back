@@ -47,7 +47,7 @@ def generate_presigned_url(filename: str):
         Params={'Bucket': bucket_name, 'Key': filename},
         ExpiresIn=3600
     )
-    return {"photo_url": url}
+    return url
     
 # 画像をアップロードするエンドポイント
 @router.post("",summary="画像をアップロード",)
